@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-4.0.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+           http://www.springframework.org/schema/tx
+        	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        	http://www.springframework.org/schema/mvc
+        	http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+   	
+   	<mvc:annotation-driven/>
+   	
+    <context:component-scan base-package="com.springmvc"></context:component-scan>
+           
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@localhost:1521:orcl"/>
+        <property name="username" value="LQP"/>
+        <property name="password" value="123"/>
+    </bean>
+    
+   <bean id="sessionFactory"
+				class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+       
+		<property name="packagesToScan">
+			<list>
+				<value>com.springmvc.model</value>
+			</list>
+		</property>
+		<!--  
+        <property name="annotatedClasses">
+            <list>
+                <value>com.bjsxt.model.User</value>
+                <value>com.bjsxt.model.Log</value>
+            </list>
+        </property>
+        -->
+        <property name="hibernateProperties">
+           
+            <!--  <value>
+                hibernate.dialect=org.hibernate.dialect.HSQLDialect
+            </value>-->
+            <props>
+            <prop key="hibernate.dialect">org.hibernate.dialect.OracleDialect</prop>
+            <prop key="hibernate.show_sql">true</prop>
+            <prop key="hibernate.hbm2ddl.auto">update</prop>
+        </props>
+        </property>
+    </bean>
+    
+    
+   <!-- 页面View层基本信息设定
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass"
+            value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/myjsp/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+	 -->
+	 
+	<bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+    <property name="mediaTypes">
+        <map>
+            <entry key="atom" value="application/atom+xml"/>
+            <entry key="html" value="text/html"/>
+            <entry key="json" value="application/json"/>
+        </map>
+    </property>
+    <property name="viewResolvers">
+        <list>
+            <bean class="org.springframework.web.servlet.view.BeanNameViewResolver"/>
+            <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+                <!-- <property name="prefix" value="/WEB-INF/jsp/"/> -->
+                <property name="suffix" value=".jsp"/>
+            </bean>
+        </list>
+    </property>
+    <property name="defaultViews">
+        <list>
+            <bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
+        </list>
+    </property>
+</bean>
+
+    <bean id="txManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <tx:annotation-driven transaction-manager="txManager"/>
+
+   <!-- 处理文件上传 -->
+	<bean id="multipartResolver"  
+	    class="org.springframework.web.multipart.commons.CommonsMultipartResolver" >  
+	    <property name="defaultEncoding" value="utf-8"/> <!-- 默认编码 (ISO-8859-1) -->  
+	    <property name="maxInMemorySize" value="10240"/> <!-- 最大内存大小 (10240)-->  
+	    <property name="uploadTempDir" value="/uploadfile/"/> <!-- 上传后的目录名 (WebUtils#TEMP_DIR_CONTEXT_ATTRIBUTE) -->  
+	    <property name="maxUploadSize" value="-1"/> <!-- 最大文件大小，-1为无限止(-1) -->  
+	</bean>
+   
+   
+    <!--  
+    
+    <aop:config> 
+	<aop:pointcut expression="execution(public * com.springmvc.service.impl.*.*(..))" id="businessService"/> 
+	<aop:advisor advice-ref="txAdvice" pointcut-ref="businessService" /> 
+	</aop:config> 
+	<tx:advice id="txAdvice" transaction-manager="txManager" > 
+		<tx:attributes> 
+			<tx:method name="get*"  read-only="true" propagation="NOT_SUPPORTED"  />
+		
+			<tx:method name="*"/> 
+		</tx:attributes> 
+	</tx:advice> 
+    
+    <context:annotation-config/>
+    <context:component-scan base-package="com.bjsxt"></context:component-scan>
+	<bean id="logInterceptor" class="com.bjsxt.aop.LogInterceptor"></bean>
+	<aop:config >
+		<aop:aspect id="myAspect" ref="logInterceptor">
+			<aop:pointcut expression="execution(public * com.bjsxt.service..*.add(..))" id="myMethod"/>
+			<aop:before method="before" pointcut-ref="myMethod" />
+		</aop:aspect>
+	</aop:config>
+ 	
+ 	-->
+    	<!-- get开头的方法不需要在事务中运行 。 
+			有些情况是没有必要使用事务的，比如获取数据。开启事务本身对性能是有一定的影响的
+			http://localhost:8080/springmvc01/user.do?username=aa
+			-->
+	
+</beans>
